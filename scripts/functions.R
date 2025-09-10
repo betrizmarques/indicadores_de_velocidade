@@ -8,10 +8,7 @@
 # brasileiros e salva tudo em uma lista de data.frames. Além de salvar um grá-
 # fico de dispersão com o rho e o p-valor na pasta plots/-----------------------
 
-
-base_principal <- read.csv('output/base_principal_indicadores.csv')
-
-calcula_correlacao_clusters <- lapply(1:79, function(cluster){
+calcula_correlacao_clusters <- function(cluster){
   base <-  base_principal %>% 
     filter(cluster == !!cluster)
   
@@ -25,7 +22,7 @@ calcula_correlacao_clusters <- lapply(1:79, function(cluster){
     ))
   }
   
-  correlacao <- cor.test(base$radares_10mil_veiculos, base$mortes_10mil_veiculos, method = 'spearman')
+  correlacao <- cor.test(base_limpa$radares_10mil_veiculos, base_limpa$mortes_10mil_veiculos, method = 'spearman')
   
   rho_valor <- correlacao$estimate
   p_valor <- correlacao$p.value
@@ -47,10 +44,8 @@ calcula_correlacao_clusters <- lapply(1:79, function(cluster){
     rho = rho_valor,
     p_valor = p_valor
   ))
-})
+}
 
-
-calculo_correlacao <- bind_rows(calcula_correlacao_clusters)
 # Separa a base em quartis------------------------------------------------------
 
 calculo_quartis <- function(){
@@ -66,16 +61,7 @@ calculo_quartis <- function(){
 # Filtra por cluster e porte e coloca 75% dos dados na variável Q75 e 25% na
 # variável Q4. Depois retorna um data.frame com as médias-----------------------
 
-cluster_lista <- 1:3
-porte_lista <- c("Menor porte", "Médio porte", "Maior porte")
-
-# Criar um data.frame com todas as 9 combinações
-combinacoes <- expand.grid(
-  cluster_param = cluster_lista,
-  porte_param = porte_lista
-)
-
-calculo_quartis <- function(cluster, porte){
+calculo_quartis_75 <- function(cluster, porte){
   filtrada <- base_principal %>% 
     filter(cluster_c == {{cluster}}, porte == {{porte}} ) %>% 
     na.omit(radares_10mil_veiculos) %>% 
@@ -99,16 +85,7 @@ calculo_quartis <- function(cluster, porte){
   ))
 }
 
-resultado_final <- expand.grid(
-  cluster_param = cluster_lista,
-  porte_param = porte_lista
-) %>%
-  mutate(resultados_aninhados = map2(
-    .x = cluster_param,
-    .y = porte_param,
-    ~ calculo_quartis(cluster = .x, porte = .y) 
-  )) %>%
-  unnest(resultados_aninhados) 
+
 
 # È a mesma função que a acima, mas calcula os 4 quartis certinhos--------------
 
@@ -137,13 +114,31 @@ calculo_quartis <- function(cluster, porte){
   
 }
 
-resultado_final <- combinacoes %>%
-  mutate(resultados_aninhados = map2(
-    .x = cluster_param,
-    .y = porte_param,
-    ~ calculo_quartis(cluster = .x, porte = .y) 
-  )) %>%
-  unnest(resultados_aninhados)
 
 # Cálcula em cada cluster a correlação e retorna em um data.frame--------------
-
+calcula_correlacao_clusters_c <- function(cluster, porte){
+  base <- base_principal %>% 
+    filter(cluster_c == {{cluster}}, porte == {{porte}}) 
+  
+  base_limpa <- na.omit(base[c('radares_10mil_veiculos', 'mortes_10mil_veiculos')])
+  
+  if (nrow(base_limpa) < 3){
+    return(data.frame(
+      cluster = {{cluster}},
+      rho = NA,
+      p_valor = NA
+    ))
+  }
+  
+  correlacao <-  cor.test(base_limpa$radares_10mil_veiculos, base_limpa$mortes_10mil_veiculos, method = 'spearman')
+  
+  rho <- correlacao$estimate
+  p_valor <- correlacao$p.value
+  
+  return(data.frame(
+    cluster = cluster,
+    rho = rho,
+    p_valor = p_valor
+  ))
+  
+}

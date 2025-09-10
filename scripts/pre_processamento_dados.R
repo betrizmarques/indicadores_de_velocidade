@@ -23,10 +23,10 @@ ufs <- tibble::tibble(
 
 # Cria um data.frame com os dados das mortes------------------------------------
 mortes <- rtdeaths %>% 
-  filter(ano_ocorrencia %in% c(2021, 2022, 2023)) %>% 
+  filter(ano_ocorrencia %in% c(2018, 2019, 2020, 2021, 2022, 2023)) %>% 
   mutate(nome_minusculo = tolower(nome_municipio_ocor)) %>% 
   group_by(nome_minusculo, nome_uf_ocor) %>% 
-  summarise(mortes_anos = n()/3) %>% 
+  summarise(mortes_anos = n()/5) %>% 
   select(nome_minusculo,nome_uf_ocor, mortes_anos)
 
 # Lê a base de outro estudo e seleciona as variáveis de interesse---------------
@@ -54,12 +54,13 @@ lista_municipios <- read.csv2('bases/final_table.csv') %>%
 base_principal <- base_metas %>% 
   left_join(base_indicadores, by = c('nome' = "nome_municipios", 'uf.y' = "SiglaUf")) %>% 
   mutate(total_radares = Aprovados + Reparadados,
-         mortes_10_mil_veiculos = n_mortes_23/frota_23*10000,
-         radares_10mil_veiculos = (Aprovados+Reparadados)/frota_23*10000) %>% 
+         mortes_10mil_veiculos = media_mortes/media_frota*10000,
+         radares_10mil_veiculos = (Aprovados+Reparadados)/media_frota*10000) %>% 
   left_join(lista_municipios, by =c('uf', 'nome' = 'nome_municipio')) %>% 
   left_join(mortes, by = c('uf' = 'nome_uf_ocor', 'nome' = 'nome_minusculo')) %>% 
   rename(sigla = uf.y) %>% 
   mutate(mortes_anos  = replace_na(mortes_anos,0))
+         #radares_10mil_veiculos = replace_na(radares_10mil_veiculos, 0))
 
 # Salva o arquivo csv em uma pasta chamada output/------------------------------
 write.csv(base_principal, file = "output/base_principal_indicadores.csv")
