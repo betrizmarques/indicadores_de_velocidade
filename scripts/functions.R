@@ -115,7 +115,7 @@ calculo_quartis <- function(cluster, porte){
 }
 
 
-# Cálcula em cada cluster a correlação e retorna em um data.frame--------------
+# Cálcula em cada cluster a correlação e retorna em um data.frame---------------
 calcula_correlacao_clusters_c <- function(cluster, porte){
   base <- base_principal %>% 
     filter(cluster_c == {{cluster}}, porte == {{porte}}) 
@@ -142,3 +142,24 @@ calcula_correlacao_clusters_c <- function(cluster, porte){
   ))
   
 }
+
+#Calcula a correlação conforma o tamanho da cidade------------------------------
+correlacao_por_tamanho <- function(tamanho1, tamanho2){
+  base_filtrada <- base_principal %>% 
+    filter(media_pop < tamanho1 & media_pop > tamanho2)
+  
+  correlacao <- cor.test(base_filtrada$radares_10mil_veiculos, base_filtrada$mortes_10mil_veiculos, method = "spearman")
+  
+  rho <- correlacao$estimate
+  p_valor <- correlacao$p.value
+  
+  return(data.frame(
+    tamanho = paste('entre', tamanho2, 'e', tamanho1),
+    rho = rho,
+    p_valor = p_valor
+  ))
+  
+}
+
+
+
