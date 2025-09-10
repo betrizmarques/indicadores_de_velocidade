@@ -1,2 +1,6 @@
-# indicadores_de_velocidade
-Repositório criado para armazenar scripts do estudo de atualização dos indicadores de velocidade (Observatório Nacional de Segurança Viária).
+# Indicadores de Gestão de Velocidade 
+
+## Descrição:
+Este presente estudo tem como objetivo avaliar a correlação entre o número de mortes/acidentes e o número de radares em cada um dos municípios brasileiros. Este estudo foi realizado pelo Observatório Nacional de Segurança Viária.
+
+
