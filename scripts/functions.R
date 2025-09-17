@@ -161,5 +161,88 @@ correlacao_por_tamanho <- function(tamanho1, tamanho2){
   
 }
 
+# Função para o renaest---------------------------------------------------------
 
+calculo_correlacao_clusters_renaest <- function(cluster){
+  base <- base_principal %>% 
+    filter(cluster == {{cluster}})
+  
+  base_limpa <- na.omit(base[c("radares_10mil_veiculos", "soma_das_vitimas_10mil_veiculos")])
+  
+  if (nrow(base_limpa) < 3){
+    return(data.frame(
+      cluster = cluster,
+      rho = NA,
+      p_valor = NA
+    ))
+  }
+  
+  correlacao <- cor.test(base_limpa$radares_10mil_veiculos, base_limpa$soma_das_vitimas_10mil_veiculos, method = 'spearman')
+  
+  rho <- correlacao$estimate
+  p_valor <- correlacao$p.value
+  
+  
+  g <- ggplot(base_limpa, aes(radares_10mil_veiculos, soma_das_vitimas_10mil_veiculos))+
+    geom_point(size = 0.7)+
+    geom_smooth()+
+    
+    labs(
+      title = paste(cluster, "p-valor:", round(correlacao$p.value, 4), "Rho:", round(correlacao$estimate, 4))
+    )
+  
+  nome_do_arquivo <- paste0('plots/renaest/correlacao_', cluster,".png")
+  
+  ggsave(filename = nome_do_arquivo,plot = g, width = 6, height = 4, units = "in"  )
+  
+  return(data.frame(
+    cluster = cluster,
+    rho = rho,
+    p_valor = p_valor
+  ))
+  
+  
+}
 
+#-------------------------------------------------------------------------------
+calculo_quartis_renaest <- function(){
+  
+  limites_quartis <- quantile(estados_com_baixo_cv$radares_10mil_veiculos, na.rm = T, robs = c(0, 0.25, 0.5, 0.75, 1.0))
+  
+  quartis <- estados_com_baixo_cv %>% 
+    mutate(quartil_radares = cut(estados_com_baixo_cv$radares_10mil_veiculos,
+                                 breaks = limites_quartis,
+                                 labels = c("Q1", "Q2", "Q3", "Q4"),
+                                 include.lowest = T))
+  
+  resultado <- quartis %>% 
+    group_by(quartil_radares) %>% 
+    summarise(media_radares = mean(radares_10mil_veiculos, na.rm = T),
+              media_vitimas = mean(soma_das_vitimas_10mil_veiculos, na.rm = T))
+  
+  return(data.frame(
+    quartil_radares = resultado$quartil_radares,
+    media_radares = resultado$media_radares,
+    media_mortes = resultado$media_vitimas
+  ))
+  
+}
+
+#-------------------------------------------------------------------------------
+correlacao_por_estado <- function(uf){
+  filtrada <- base_principal %>% 
+    filter(uf == "Pará")
+  
+  correlacao <- cor.test(filtrada$radares_10mil_veiculos, filtrada$mortes_10mil_veiculos)
+  
+  rho <- correlacao$estimate
+  p_valor <- correlacao$p.value
+  
+  
+  return(data.frame(
+    estado = uf,
+    rho = rho,
+    p_valor = p_valor
+  ))
+  
+}
