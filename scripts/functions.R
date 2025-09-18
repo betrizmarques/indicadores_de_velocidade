@@ -167,7 +167,7 @@ calculo_correlacao_clusters_renaest <- function(cluster){
   base <- base_principal %>% 
     filter(cluster == {{cluster}})
   
-  base_limpa <- na.omit(base[c("radares_10mil_veiculos", "soma_das_vitimas_10mil_veiculos")])
+  base_limpa <- na.omit(base[c("radares_10mil_veiculos", "sinistros_10mil_veiculos")])
   
   if (nrow(base_limpa) < 3){
     return(data.frame(
@@ -177,13 +177,13 @@ calculo_correlacao_clusters_renaest <- function(cluster){
     ))
   }
   
-  correlacao <- cor.test(base_limpa$radares_10mil_veiculos, base_limpa$soma_das_vitimas_10mil_veiculos, method = 'spearman')
+  correlacao <- cor.test(base_limpa$radares_10mil_veiculos, base_limpa$sinistros_10mil_veiculos, method = 'spearman')
   
   rho <- correlacao$estimate
   p_valor <- correlacao$p.value
   
   
-  g <- ggplot(base_limpa, aes(radares_10mil_veiculos, soma_das_vitimas_10mil_veiculos))+
+  g <- ggplot(base_limpa, aes(radares_10mil_veiculos, sinistros_10mil_veiculos))+
     geom_point(size = 0.7)+
     geom_smooth()+
     
@@ -218,12 +218,12 @@ calculo_quartis_renaest <- function(){
   resultado <- quartis %>% 
     group_by(quartil_radares) %>% 
     summarise(media_radares = mean(radares_10mil_veiculos, na.rm = T),
-              media_vitimas = mean(soma_das_vitimas_10mil_veiculos, na.rm = T))
+              media_sinistros = mean(sinistros_10mil_veiculos, na.rm = T))
   
   return(data.frame(
     quartil_radares = resultado$quartil_radares,
     media_radares = resultado$media_radares,
-    media_mortes = resultado$media_vitimas
+    media_sinistros = resultado$media_sinistros
   ))
   
 }

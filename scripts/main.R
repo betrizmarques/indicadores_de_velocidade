@@ -3,6 +3,7 @@
 #-------------------------------------------------------------------------------
 
 library(tidyverse)
+options(scipen = 999)
 
 source('scripts/functions.R')
 
@@ -81,9 +82,46 @@ resultado_correlacao_tamanhos <- tamanhos %>%
 
 # Por estado -------------------------------------------------------------------
 
-lista_ordenada <- base_principal %>% 
-  arrange(desc(radares_10mil_veiculos)) %>% 
-  head(100)
+correlacao_por_estado <- base_principal %>% 
+  group_by(uf) %>% 
+  summarise(media_mortes = mean(mortes_10mil_veiculos, na.rm = T),
+            media_radares = mean(radares_10mil_veiculos, na.rm = T))
 
-correlacao <- cor.test(lista_ordenada$radares_10mil_veiculos, lista_ordenada$mortes_10mil_veiculos, method = "spearman")  
-  
+ggplot(correlacao_por_estado, aes(media_mortes, media_radares))+
+  geom_point()+
+  geom_smooth()
+
+correlacao_goias <- base_principal %>% 
+  filter( uf == "Ceará" & cluster_c == 3)
+
+cor.test(correlacao_goias$mortes_10mil_veiculos, correlacao_goias$radares_10mil_veiculos, method = "spearman")
+ggplot(correlacao_goias, aes(mortes_10mil_veiculos, radares_10mil_veiculos))+
+  geom_point()+
+  geom_smooth()
+
+#--------------------------------------------------------------------------------
+resultado_correlacao_cluster_c <- combinacoes %>% 
+  mutate(resultado = map2(
+    .x = cluster_param,
+    .y = porte_param,
+    ~correlacao_cluster_porte(cluster = .x, porte = .y)
+  )) %>% unnest()
+#-------------------------------------------------------------------------------
+cluster_lista <- 1:3
+uf_lista <- unique(base_principal$uf)
+
+combinacoes <- expand.grid(
+  cluster_param = cluster_lista,
+  uf_param = uf_lista)
+
+resultado_correlacao_cluster_estado <- combinacoes %>% 
+  mutate(resultados_aninhados = map2(
+    .x = cluster_param,
+    .y = uf_param,
+    ~correlacao_cluster_estado(cluster = .x, uf = .y)
+  )) %>% unnest()
+
+
+#--------------------------------------------------------------------------------
+results <- lapply(uf_lista, correlacao_estado)
+results <- bind_rows(results)

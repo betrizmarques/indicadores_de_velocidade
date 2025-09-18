@@ -55,8 +55,8 @@ base_principal <- base_metas %>%
   left_join(base_indicadores, by = c('nome' = "nome_municipios", 'uf.y' = "SiglaUf")) %>% 
   left_join(mortes, by = c('uf' = 'nome_uf_ocor', 'nome' = 'nome_minusculo')) %>% 
   mutate(total_radares = ifelse(is.na(Aprovados + Reparadados), 0, Aprovados + Reparadados),
-         mortes_10mil_veiculos = mortes_anos/media_frota*10000,
-         radares_10mil_veiculos = (Aprovados+Reparadados)/media_frota*10000) %>% 
+         mortes_10mil_veiculos = mortes_anos/frota_23*10000,
+         radares_10mil_veiculos = (Aprovados+Reparadados)/frota_23*10000) %>% 
   left_join(lista_municipios, by =c('uf', 'nome' = 'nome_municipio')) %>% 
   rename(sigla = uf.y) %>% 
   mutate(mortes_anos  = replace_na(mortes_anos,0),

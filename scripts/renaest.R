@@ -11,29 +11,29 @@ base_vitimas <- read.csv2('bases/renaest/Vitimas_DadosAbertos_20250812.csv') %>%
   left_join(base_localidade, by = 'chv_localidade')
 
 agrupadas_por_municipio <- base_vitimas %>% 
-  filter(ano_acidente == 2023 ) %>% 
+  filter(ano_acidente == 2023 & qtde_feridosilesos > 0 ) %>% 
   group_by(uf_acidente, municipio) %>% 
-  summarise(qtde_vitimas = n()) %>% 
+  summarise(sinistros_renaest = n_distinct(num_acidente)) %>% 
   mutate(municipio = tolower(municipio))
 
 dados_rodovias_federais <- read.csv2('bases/renaest/datatran2023.csv')
 
 agrupados_rodovias_federais <- dados_rodovias_federais %>% 
-  filter(mortos > 0 | feridos >  0) %>% 
-  mutate(total_vitimas = feridos+mortos) %>% 
-  group_by(uf, municipio) %>% 
-  summarise(qtde_vitimas_federais = sum(total_vitimas)) %>% 
+  filter(classificacao_acidente == "Com V\xedtimas Feridas" | classificacao_acidente == "Com V\xedtimas Fatais") %>% 
+  group_by(uf, municipio) %>%
+  summarise(sinistros_federais = n()) %>%
   mutate(municipio = tolower(municipio))
+  # Calcular a quantidade de sinsitros -------------------
 
 base_principal <- read.csv('output/base_principal_indicadores.csv') %>% 
   mutate(municipio_sem_acento = iconv(nome, from = "UTF-8", to = 'ASCII//TRANSLIT')) %>% 
   left_join(agrupadas_por_municipio, by = c("municipio_sem_acento" = "municipio", 'sigla' = 'uf_acidente')) %>% 
   left_join(agrupados_rodovias_federais, by = c("municipio_sem_acento" = "municipio", "sigla" = "uf")) %>%  
-  mutate(vitimas_10mil_veiculos = qtde_vitimas/`Frota`*10000,
-         qtde_vitimas_federais = replace_na(qtde_vitimas_federais, 0),
-         qtde_vitimas = replace_na(qtde_vitimas, 0),
-         soma_das_vitimas = qtde_vitimas_federais+qtde_vitimas,
-         soma_das_vitimas_10mil_veiculos = soma_das_vitimas/frota_23*10000,
+  mutate(sinistros_renaest = replace_na(sinistros_renaest, 0),
+         sinistros_federais = replace_na(sinistros_federais, 0),
+          total_sinistros = sinistros_federais+sinistros_renaest,
+         sinistros_10mil_veiculos = total_sinistros/frota_23*10000,
+         sinistros_10mil_veiculos = replace_na(sinistros_10mil_veiculos, 0),
          radares_10mil_veiculos = total_radares/frota_23*10000) %>% 
   mutate(radares_10mil_veiculos = replace_na(radares_10mil_veiculos, 0))
 
@@ -43,10 +43,9 @@ lista_aninhada_renaest <- bind_rows(lista_correlacoes_renaest)
 
 estados_com_baixo_cv <- base_principal %>% 
 #  filter(total_radares > 0) %>% 
-  filter(sigla %in% c("GO", "PR", "MG", "PA", "PB")) %>% 
-  mutate(soma_das_vitimas_10mil_veiculos = soma_das_vitimas/frota_23*10000)
+  filter(sigla %in% c("GO", "PR", "MG", "PA", "PB"))
 
-cor.test(estados_com_baixo_cv$radares_10mil_veiculos, estados_com_baixo_cv$soma_das_vitimas_10mil_veiculos, method = "spearman")
+cor.test(estados_com_baixo_cv$radares_10mil_veiculos, estados_com_baixo_cv$sinistros_10mil_veiculos, method = "spearman")
 
 #-------------------------------------------------------------------------------
 cluster_lista <- 1:3
