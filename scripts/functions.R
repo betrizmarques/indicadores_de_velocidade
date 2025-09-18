@@ -161,5 +161,106 @@ correlacao_por_tamanho <- function(tamanho1, tamanho2){
   
 }
 
+# Calcula correlação por cluster socioeconômico e por porte --------------------
+correlacao_cluster_porte <- function(cluster, porte){
+  base <- base_principal %>% 
+    filter(cluster_b == {{cluster}}, porte == {{porte}})
+  
+  correlacao <- cor.test(base$mortes_10mil_veiculos, base$radares_10mil_veiculos, method = 'spearman')
+  
+  rho <- correlacao$estimate
+  p_valor <- correlacao$p.value
+  
+  
+  return(data.frame(
+    cluster = cluster,
+    porte = porte,
+    rho = rho,
+    p_valor = p_valor
+  ))
+}
 
+correlacao_cluster_estado <- function(cluster, uf){
+  base <- base_principal %>% 
+    filter(cluster_c == {{cluster}}, uf == {{uf}})
+  
+  base_filtrada <- na.omit(base[c("radares_10mil_veiculos", "mortes_10mil_veiculos")])
+  
+  if (nrow(base_filtrada) < 3){
+    return(data.frame(
+      cluster = cluster,
+      uf = uf,
+      rho = NA,
+      p_valor = NA
+    ))
+  }
+ 
+   correlacao <- cor.test(base_filtrada$mortes_10mil_veiculos, base_filtrada$radares_10mil_veiculos, method = 'spearman')
+  
+  rho <- correlacao$estimate
+  p_valor <- correlacao$p.value
+  
+  # g <- ggplot(base_filtrada, aes(mortes_10mil_veiculos, radares_10mil_veiculos))+
+  #   geom_point(size = 0.7)+
+  #   geom_smooth()+
+  #   
+  #   labs(
+  #     title = paste(uf, 'cluster:', cluster, "p-valor:", round(correlacao$p.value, 4), "Rho:", round(correlacao$estimate, 4))
+  #   )
+  # 
+  # nome_arquivo <- paste0("plots/novo_calc/", uf,"_", cluster,".png" )
+  # 
+  # 
+  # ggsave(filename = nome_arquivo, plot = g, width = 6, height = 4, units = "in" )
+
+  
+  return(data.frame(
+    cluster = cluster,
+    uf = uf,
+    rho = rho,
+    p_valor = p_valor
+  ))
+}
+
+
+
+correlacao_estado <- function(uf){
+  base <- base_principal %>% 
+    filter(uf == {{uf}})
+  
+  base_filtrada <- na.omit(base[c("radares_10mil_veiculos", "mortes_10mil_veiculos")])
+  
+  if (nrow(base_filtrada) < 3){
+    return(data.frame(
+      uf = uf,
+      rho = NA,
+      p_valor = NA
+    ))
+  }
+  
+  correlacao <- cor.test(base_filtrada$mortes_10mil_veiculos, base_filtrada$radares_10mil_veiculos, method = 'spearman')
+  
+  rho <- correlacao$estimate
+  p_valor <- correlacao$p.value
+  
+  # g <- ggplot(base_filtrada, aes(mortes_10mil_veiculos, radares_10mil_veiculos))+
+  #   geom_point(size = 0.7)+
+  #   geom_smooth()+
+  #   
+  #   labs(
+  #     title = paste(uf, 'cluster:', cluster, "p-valor:", round(correlacao$p.value, 4), "Rho:", round(correlacao$estimate, 4))
+  #   )
+  # 
+  # nome_arquivo <- paste0("plots/novo_calc/", uf,"_", cluster,".png" )
+  # 
+  # 
+  # ggsave(filename = nome_arquivo, plot = g, width = 6, height = 4, units = "in" )
+  
+  
+  return(data.frame(
+    uf = uf,
+    rho = rho,
+    p_valor = p_valor
+  ))
+}
 
