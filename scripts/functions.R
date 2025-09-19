@@ -231,9 +231,18 @@ calculo_quartis_renaest <- function(){
 #-------------------------------------------------------------------------------
 correlacao_por_estado <- function(uf){
   filtrada <- base_principal %>% 
-    filter(uf == "Pará")
+    filter(uf == {{uf}})
   
-  correlacao <- cor.test(filtrada$radares_10mil_veiculos, filtrada$mortes_10mil_veiculos)
+  
+  
+  if (nrow(filtrada) <3){
+    return(data.frame(
+      estado = uf,
+      rho = NA,
+      p_valor = NA
+    ))
+  }
+  correlacao <- cor.test(filtrada$radares_10mil_veiculos, filtrada$sinistros_10mil_veiculos)
   
   rho <- correlacao$estimate
   p_valor <- correlacao$p.value
