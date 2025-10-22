@@ -121,7 +121,10 @@ resultado_correlacao_cluster_estado <- combinacoes %>%
     ~correlacao_cluster_estado(cluster = .x, uf = .y)
   )) %>% unnest()
 
-
 #--------------------------------------------------------------------------------
 results <- lapply(uf_lista, correlacao_estado)
 results <- bind_rows(results)
+
+
+
+
