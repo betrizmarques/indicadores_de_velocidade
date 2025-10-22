@@ -38,26 +38,27 @@ base_metas_mortes <- read.csv('bases/base_principal.csv') %>%
 # Lê a base de metas e junta com a base acima-----------------------------------
 base_metas <- read.csv("bases/municipios_metas.csv") %>% 
   left_join(base_metas_mortes, by = c('uf'='estado', 'nome')) %>% 
-  mutate(nome = tolower(nome))
+  mutate(nome_minusculo = tolower(nome))
 
 # Lê a base de radares e selciona as variáveis de interesse---------------------
 base_indicadores <- readxl::read_xlsx("bases/INDICADORES_RADARES_MUNICIPIOS.xlsx", sheet = 4) %>%
-  mutate(nome_municipios = tolower(`Municipio (COM ACENTO)`)) %>% 
-  select(SiglaUf, nome_municipios, Frota, Aprovados, Reparadados, I1 )
+  mutate(nome_minusculo = tolower(`Municipio (COM ACENTO)`),
+         nome = `Municipio (COM ACENTO)`) %>% 
+  select(SiglaUf, nome_minusculo, Frota, Aprovados, Reparadados, I1 )
 
 # Lê a base de clusters e seleciona as variáveis de interesse-------------------
 lista_municipios <- read.csv2('bases/final_table.csv') %>% 
-  mutate(nome_municipio = tolower(nome)) %>% 
-  select(nome_municipio, uf, cluster_a, cluster_b, cluster_c)
+  mutate(nome_minusculo = tolower(nome)) %>% 
+  select(nome_minusculo, uf, cluster_a, cluster_b, cluster_c)
 
 # Junta tudo em uma base principal e cria novas variáveis com alguns cálculos---
 base_principal <- base_metas %>% 
-  left_join(base_indicadores, by = c('nome' = "nome_municipios", 'uf.y' = "SiglaUf")) %>% 
-  left_join(mortes, by = c('uf' = 'nome_uf_ocor', 'nome' = 'nome_minusculo')) %>% 
+  left_join(base_indicadores, by = c("nome_minusculo", 'uf.y' = "SiglaUf")) %>% 
+  left_join(mortes, by = c('uf' = 'nome_uf_ocor', 'nome_minusculo')) %>% 
   mutate(total_radares = ifelse(is.na(Aprovados + Reparadados), 0, Aprovados + Reparadados),
          mortes_10mil_veiculos = mortes_anos/frota_23*10000,
-         radares_10mil_veiculos = (Aprovados+Reparadados)/frota_23*10000) %>% 
-  left_join(lista_municipios, by =c('uf', 'nome' = 'nome_municipio')) %>% 
+         radares_10mil_veiculos = ((Aprovados+Reparadados)/`Frota`)*10000) %>% 
+  left_join(lista_municipios, by =c('uf', 'nome_minusculo')) %>% 
   rename(sigla = uf.y) %>% 
   mutate(mortes_anos  = replace_na(mortes_anos,0),
          radares_10mil_veiculos = replace_na(radares_10mil_veiculos, 0))
