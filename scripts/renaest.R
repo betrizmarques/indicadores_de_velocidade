@@ -4,6 +4,9 @@
 
 source('scripts/functions.R')
 library(tidyverse)
+options(scipen = 999)
+
+base_acidentes <- read.csv2('bases/renaest/Acidentes_DadosAbertos_20250812.csv')
 
 base_localidade <- read.csv2('bases/renaest/Localidade_DadosAbertos_20250812.csv')
 base_vitimas <- read.csv2('bases/renaest/Vitimas_DadosAbertos_20250812.csv') %>% 
@@ -11,7 +14,7 @@ base_vitimas <- read.csv2('bases/renaest/Vitimas_DadosAbertos_20250812.csv') %>%
   left_join(base_localidade, by = 'chv_localidade')
 
 agrupadas_por_municipio <- base_vitimas %>% 
-  filter(ano_acidente == 2023 & qtde_feridosilesos > 0 ) %>% 
+  filter(ano_acidente == 2023 & qtde_feridosilesos > 0 | qtde_obitos > 0) %>% 
   group_by(uf_acidente, municipio) %>% 
   summarise(sinistros_renaest = n_distinct(num_acidente)) %>% 
   mutate(municipio = tolower(municipio))
@@ -48,6 +51,8 @@ estados_com_baixo_cv <- base_principal %>%
 cor.test(estados_com_baixo_cv$radares_10mil_veiculos, estados_com_baixo_cv$sinistros_10mil_veiculos, method = "spearman")
 
 #-------------------------------------------------------------------------------
+radares_maior_que_0 <- base_principal %>% 
+  filter(radares_10mil_veiculos>0)
 cluster_lista <- 1:3
 porte_lista <- c("Menor porte", "Médio porte", "Maior porte")
 
@@ -68,7 +73,41 @@ calculo_quartis_renaest()
 
 cor.test(estados_com_baixo_cv$radares_10mil_veiculos, estados_com_baixo_cv$soma_das_vitimas_10mil_veiculos, method = "spearman")
 
-#--------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 lista_ufs <- unique(base_principal$uf)
 correlacao_estados_aninhados <- lapply(lista_ufs, correlacao_por_estado)  
 correlacao_estados <- bind_rows(correlacao_estados_aninhados)  
+
+#Cálculo correlação cluster e porte---------------------------------------------
+cluster_lista <- 1:3
+porte_lista <- c("Menor porte", "Médio porte", "Maior porte")
+
+combinacoes <- expand.grid(
+  cluster_param = cluster_lista,
+  porte_param = porte_lista
+)
+
+resultado_correlacao_estado_porte_renaest <- combinacoes %>% 
+  mutate(resultado = map2(
+    .x = cluster_param,
+    .y = porte_param,
+    ~correlacao_cluster_porte_renaest(cluster = .x, porte = .y)
+  )) %>% unnest()
+
+
+#Correlação por estado e cluster------------------------------------------------
+cluster_lista <- 1:3
+uf_lista <- unique(estados_com_baixo_cv$uf)
+
+combinacoes <- expand.grid(
+  cluster_param = cluster_lista,
+  uf_param = uf_lista)
+
+resultado_correlacao_cluster_estado_renaest <- combinacoes %>% 
+  mutate(resultados_aninhados = map2(
+    .x = cluster_param,
+    .y = uf_param,
+    ~correlacao_cluster_estado_renaest(cluster = .x, uf = .y)
+  )) %>% unnest()
+
+

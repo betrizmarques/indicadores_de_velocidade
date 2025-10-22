@@ -205,25 +205,27 @@ calculo_correlacao_clusters_renaest <- function(cluster){
 }
 
 #-------------------------------------------------------------------------------
-calculo_quartis_renaest <- function(){
+calculo_quartis_renaest <- function(cluster, porte){
+  filtrada <- base_principal %>% 
+    filter(cluster_c == {{cluster}}, porte == {{porte}} & radares_10mil_veiculos>0)
   
-  limites_quartis <- quantile(estados_com_baixo_cv$radares_10mil_veiculos, na.rm = T, robs = c(0, 0.25, 0.5, 0.75, 1.0))
+  limites_quartis <- quantile(filtrada$radares_10mil_veiculos, na.rm = T, robs = c(0, 0.25, 0.5, 0.75, 1.0))
   
-  quartis <- estados_com_baixo_cv %>% 
-    mutate(quartil_radares = cut(estados_com_baixo_cv$radares_10mil_veiculos,
+  filtrada <- filtrada %>% 
+    mutate(quartil_radares = cut(filtrada$radares_10mil_veiculos,
                                  breaks = limites_quartis,
                                  labels = c("Q1", "Q2", "Q3", "Q4"),
                                  include.lowest = T))
   
-  resultado <- quartis %>% 
+  resultado <- filtrada %>% 
     group_by(quartil_radares) %>% 
     summarise(media_radares = mean(radares_10mil_veiculos, na.rm = T),
-              media_sinistros = mean(sinistros_10mil_veiculos, na.rm = T))
+              media_mortes = mean(sinistros_10mil_veiculos))
   
   return(data.frame(
     quartil_radares = resultado$quartil_radares,
     media_radares = resultado$media_radares,
-    media_sinistros = resultado$media_sinistros
+    media_mortes = resultado$media_mortes
   ))
   
 }
@@ -255,3 +257,111 @@ correlacao_por_estado <- function(uf){
   ))
   
 }
+# Calcula correlação para cada combinação de cluster e porte -------------------
+correlacao_cluster_estado_renaest <- function(cluster, uf){
+  base <- estados_com_baixo_cv %>% 
+    filter(cluster_c == {{cluster}}, uf == {{uf}}) 
+  
+  base_limpa <- na.omit(base[c('radares_10mil_veiculos', 'sinistros_10mil_veiculos')])
+  
+  if (nrow(base_limpa) < 3){
+    return(data.frame(
+      cluster = {{cluster}},
+      uf = {{uf}},
+      rho = NA,
+      p_valor = NA
+    ))
+  }
+  
+  correlacao <-  cor.test(base_limpa$radares_10mil_veiculos, base_limpa$sinistros_10mil_veiculos, method = 'spearman')
+  
+  rho <- correlacao$estimate
+  p_valor <- correlacao$p.value
+  
+  return(data.frame(
+    cluster = cluster,
+    uf = uf,
+    rho = rho,
+    p_valor = p_valor
+  ))
+  
+}
+
+correlacao_por_estado <- function(uf){
+  filtrada <- base_principal %>% 
+    filter(uf == {{uf}})
+  
+  
+  
+  if (nrow(filtrada) <3){
+    return(data.frame(
+      estado = uf,
+      rho = NA,
+      p_valor = NA
+    ))
+  }
+  correlacao <- cor.test(filtrada$radares_10mil_veiculos, filtrada$sinistros_10mil_veiculos)
+  
+  rho <- correlacao$estimate
+  p_valor <- correlacao$p.value
+  
+  
+  return(data.frame(
+    estado = uf,
+    rho = rho,
+    p_valor = p_valor
+  ))
+  
+}
+
+
+correlacao_cluster_porte_renaest <- function(cluster, porte){
+  base <- estados_com_baixo_cv %>% 
+    filter(cluster_c == {{cluster}}, porte == {{porte}}) 
+  
+  base_limpa <- na.omit(base[c('radares_10mil_veiculos', 'sinistros_10mil_veiculos')])
+  
+  if (nrow(base_limpa) < 3){
+    return(data.frame(
+      cluster = {{cluster}},
+      uf = {{uf}},
+      rho = NA,
+      p_valor = NA
+    ))
+  }
+  
+  correlacao <-  cor.test(base_limpa$radares_10mil_veiculos, base_limpa$sinistros_10mil_veiculos, method = 'spearman')
+  
+  rho <- correlacao$estimate
+  p_valor <- correlacao$p.value
+  
+  return(data.frame(
+    cluster = cluster,
+    porte = porte,
+    rho = rho,
+    p_valor = p_valor
+  ))
+  
+}
+#-------------------------------------------------------------------------------
+calcula_valores_ifs <- function(cluster_junto, porte){
+  base <- base_principal %>% 
+    filter(cluster_junto == {{cluster_junto}}, porte == {{porte}} & radares_10mil_veiculos >0)
+  
+  valor_max <- max(base$radares_10mil_veiculos)
+  valor_medio <- mean(base$radares_10mil_veiculos, na.rm = T)
+  valor_q3 <- quantile(base$radares_10mil_veiculos, na.rm =T, probs = 0.75)
+  valor_q2 <- quantile(base$radares_10mil_veiculos, na.rm = T, probs = 0.5)
+  
+  return(data.frame(
+    valor_max = valor_max,
+    valor_medio = valor_medio,
+    valor_q2 = valor_q2,
+    valor_q3 = valor_q3
+ 
+  )) 
+}
+
+
+#-------------------------------------------------------------------------------
+
