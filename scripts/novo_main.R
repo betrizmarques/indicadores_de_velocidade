@@ -31,7 +31,11 @@ resultado_quartis <- combinacoes %>%
 
 
 referencia_radares <- base_principal %>% 
-  left_join(resultado_quartis, by = c("porte" = "porte_param", "cluster_junto" = "cluster_param"))
+  left_join(resultado_quartis, by = c("porte" = "porte_param", "cluster_junto" = "cluster_param")) %>% 
+  mutate(
+    valor_abs = (valor_q3 * frota_23)/10000
+  )
 
+View(referencia_radares)
 write.csv(referencia_radares, "output/base_referencia_radares.csv")
 write.csv(referencia_radares, "shiny/base_referencia_radares.csv")
