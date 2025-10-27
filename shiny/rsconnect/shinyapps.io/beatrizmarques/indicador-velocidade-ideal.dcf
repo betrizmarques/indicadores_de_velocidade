@@ -1,0 +1,12 @@
+name: indicador-velocidade-ideal
+title: indicador-velocidade-ideal
+username: beatrizmarques
+account: beatrizmarques
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15877303
+bundleId: 11088900
+url: https://beatrizmarques.shinyapps.io/indicador-velocidade-ideal/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE

@@ -2,7 +2,18 @@ library(shiny)
 library(bs4Dash)
 library(tidyverse)
 library(plotly)
+library(fresh)
+library(markdown)
 
+theme <- create_theme(
+  bs4dash_color (
+       yellow = "#f49725"
+  ),
+  bs4dash_status(
+    primary = '#f49725',
+    info = "#bdbdbd"
+  )
+)
 
 base <- read_csv("base_referencia_radares.csv") %>% 
   mutate(cluster_porte = case_when(
@@ -16,20 +27,28 @@ base <- read_csv("base_referencia_radares.csv") %>%
   potencial = case_when(
     cluster_junto == "Clusters 1 e 3" ~ "Menor Potencial de Mobilização",
     cluster_junto == "Cluster 2" ~ "Maior Potencial de Mobilização"
-  ))
+  ),
+  porte_com_numeros = case_when(
+    porte == "Menor porte" ~ "Menor porte (<20 mil)",
+    porte == "Médio porte" ~ "Médio porte (>20 mil e <100 mil)",
+    porte == "Maior porte" ~ "Maior porte (>100 mil)"
+  )) %>% filter(!is.na(valor_q3))
 
 ui <- dashboardPage(
-  title = "ONSV - Indicador de velocidade ideal",
   
+  
+  freshTheme = theme,
+  title = "ONSV - Indicador de velocidade ideal",
+
   fullscreen = T,
   dark = NULL,
   help = NULL,
   scrollToTop = T,
-  
+
   header = dashboardHeader(
     title = dashboardBrand(
       title = "ONSV",
-      image = "https://scontent.fcwb5-1.fna.fbcdn.net/v/t39.30808-6/334802684_2454871028026926_8179625649357201682_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=cGNoDhC-90QQ7kNvwHRlxq3&_nc_oc=AdnlGyA6N8CjKawU_tpthHgm_ZZF1Voml5g5pz8c3gqMp5MwLhTXr-fv_8Ewlitbdr0&_nc_zt=23&_nc_ht=scontent.fcwb5-1.fna&_nc_gid=M6fTLEbNu2mPVakvDu0nyA&oh=00_AfcDNnPWoTUDKnV1Y5-j3LGwmGjvYpVzSOfoCILQ3Qptng&oe=68F8BBD2"
+      image = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTiUGcruSnnUaYj84CofuRj9oRE1ZX7K-JpcQ&s"
       
     )
   ),
@@ -40,6 +59,11 @@ ui <- dashboardPage(
         "Início",
         tabName = "inicio",
         icon = icon("home")
+      ),
+      menuItem(
+        "Relatório",
+        tabName = "introducao",
+        icon = icon("info")
       ),
       menuItem(
         "Nível de fiscalização",
@@ -54,8 +78,13 @@ ui <- dashboardPage(
   ),
   body = dashboardBody(
     tags$head(
-      tags$style(
-        HTML("
+      tags$link(
+        rel = "icon",
+        href = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTiUGcruSnnUaYj84CofuRj9oRE1ZX7K-JpcQ&s"
+      )
+    ),  
+    tags$head(
+      tags$style(HTML("
         .jumbotron {
           background-color: #c0c0c0 !important;
           color: #000000 !important;
@@ -65,19 +94,18 @@ ui <- dashboardPage(
           color: white !important;
           border: none !important;
         }
-      " )
-      )
+      "))
     ),
     tags$head(
       tags$style(HTML("
         .nav-pills .nav-link.active,
         .nav-pills .show>.nav-link {
           background-color: #007bff !important;
-          color: white !important;
+          color: white !important;  
         }
         
         .nav-sidebar .nav-item>.nav-link.active {
-          background-color: #FFCC00 !important;
+          background-color: #f49725 !important;
           color: white !important;
         }
       "))
@@ -89,11 +117,12 @@ ui <- dashboardPage(
         
         jumbotron(
           title = "Qual o nível de fiscalização eletrônica de velocidade que um município deve ter?",
-          "Um estudo sobre o cenário da fiscalização eletrônica de velocidade nos municípios brasileiros",
-          lead = "",
-          href = "",
-          btnName = "Relatório",
-          ""
+          lead = "Um estudo sobre o cenário da fiscalização eletrônica de velocidade nos municípios brasileiros",
+          href = "https://www.onsv.org.br/estudos-pesquisas/estudos-e-pesquisas",
+          btnName = "ONSV",
+          "Confira outras pesquisas e estudos no link abaixo:",
+          status = "info"
+          
         ),
         
         fluidRow(
@@ -101,10 +130,10 @@ ui <- dashboardPage(
             collapsible = FALSE,
             title = userDescription(
               title = "Observatório Nacional de Segurança Viária",
-              image = "https://scontent.fcwb5-1.fna.fbcdn.net/v/t39.30808-6/334802684_2454871028026926_8179625649357201682_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=cGNoDhC-90QQ7kNvwHRlxq3&_nc_oc=AdnlGyA6N8CjKawU_tpthHgm_ZZF1Voml5g5pz8c3gqMp5MwLhTXr-fv_8Ewlitbdr0&_nc_zt=23&_nc_ht=scontent.fcwb5-1.fna&_nc_gid=M6fTLEbNu2mPVakvDu0nyA&oh=00_AfcDNnPWoTUDKnV1Y5-j3LGwmGjvYpVzSOfoCILQ3Qptng&oe=68F8BBD2",
+              image = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTiUGcruSnnUaYj84CofuRj9oRE1ZX7K-JpcQ&s",
               type = 1
             ),
-            status = "warning",
+            status = "primary",
             HTML("<br>"),
             "O Observatório Nacional de Segurança Viária é uma instituição social
             sem fins lucrativos, dedicada a desenvolver ações que contribuam efetivamente
@@ -115,14 +144,26 @@ ui <- dashboardPage(
           ),
           
           box(
-            title = "Introdução",
+            title = "Objetivo",
             width = 6,
             collapsible = TRUE,
             blockQuote(
               "Este estudo tem como objetivo estabelecer um nível de fiscalização
               eletrônica de velocidade ideal para os municípios brasileiros. ",
-              color = "warning"
+              color = "primary"
             )
+          )
+        )
+      ),
+      tabItem(
+        tabName = "introducao",
+        fluidRow(
+          bs4Card(
+            title = "Relatório",
+            status = "primary",
+            solidHeader = TRUE,
+            width = 12,
+            includeMarkdown("introducao.Rmd")
           )
         )
       ),
@@ -230,17 +271,17 @@ ui <- dashboardPage(
         ),
         fluidRow(
           box(
-            title = "Fiscalização Eletrônica de Velocidade",
+            title = strong("Fiscalização Eletrônica de Velocidade"),
             solidHeader = T,
             width = 4,
-            status = "warning",
+            status = "primary",
             height = "440px",
             uiOutput("fiscalizacao")
           ),
           box(
-            title = "Boxplot",
+            title = strong("Situação do município em seu cluster"),
             solidHeader = T,
-            status = "warning",
+            status = "primary",
             width = 8,
             plotlyOutput("boxplot", height = "400px")
           )
@@ -359,7 +400,7 @@ server <- function(input, output, session){
   output$porte_text <- renderText({
     dados <- dados_selecionados()
     if (!is.null(dados)){
-      print(dados$porte)
+      print(dados$porte_com_numeros)
     } else {
       "---"
     }
@@ -391,27 +432,80 @@ server <- function(input, output, session){
     
     valor_ideal_q3 <- quantile(dados_grupo$radares_10mil_veiculos, na.rm = TRUE, probs = 0.75)
     
+    cameras_atual <- dados$total_radares
+    
+    cameras_ideal <- round(dados$valor_abs)
   
     valor_atual_txt <- format(round(valor_atual, 2), big.mark = ".", decimal.mark = ",")
     valor_ideal_txt <- format(round(valor_ideal_q3, 2), big.mark = ".", decimal.mark = ",")
+    cameras_atual_txt <- format(round(cameras_atual, 2), big.mark = ".", decimal.mark = ",")
+    cameras_ideal_txt <- format(round(cameras_ideal, 2), big.mark = ".", decimal.mark = ",")
     
   
     if (valor_atual >= valor_ideal_q3) {
       comparacao_ui <- div(
-        style = "color: #28a745; font-weight: bold; margin-top: 45px; text-align: center; font-size: 1.1em;", 
+        style = "color: #28a745; font-weight: bold; margin-top: 15px; text-align: center; font-size: 1.1em;", 
         icon("check-circle", style = "font-size: 1.5em;"),
         br(),
         "O município está no nível ideal ou acima."
       )
     } else {
       comparacao_ui <- div(
-        style = "color: #dc3545; font-weight: bold; margin-top: 45px; text-align: center; font-size: 1.1em;", 
+        style = "color: #dc3545; font-weight: bold; margin-top: 15px; text-align: center; font-size: 1.1em;", 
         icon("times-circle", style = "font-size: 1.5em;"),
         br(),
         "O município está abaixo do nível ideal."
       )
     }
     
+    if (valor_atual >= valor_ideal_q3){
+      div_cor <- div(
+        style = "padding: 5px; margin-top: 15px; font-size: 1.2em; ",
+        div(
+          style = "display: flex; justify-content: space-between; align-items: center;",
+          strong("Nível de Fiscalização Atual:"),
+          span(
+            valor_atual_txt, 
+            style = "font-size: 1.4em; font-weight: bold; color: #28a745;"
+          )
+        ),
+        
+        
+        div(
+          style = "font-size: 0.5em; color: #6c757d; margin-top: 0px;", 
+          "(câmeras de segurança/10 mil veículos)"
+        )
+      )
+      div_cor_2 <- div(
+        style = "padding: 5px; margin-top: 10px;font-size: 1.2em; display: flex; justify-content: space-between; align-items: center;",
+        strong("Número Atual de Câmeras:"), 
+        span(cameras_atual_txt, 
+             style = "float: right; font-size: 1.4em; font-weight: bold; color: #28a745;")
+      )} else {
+        div_cor <- div(
+          style = "padding: 5px; margin-top: 15px; font-size: 1.2em; ",
+          div(
+            style = "display: flex; justify-content: space-between; align-items: center;",
+            strong("Nível de Fiscalização Atual:"),
+            span(
+              valor_atual_txt, 
+              style = "font-size: 1.4em; font-weight: bold; color: #dc3545;"
+            )
+          ),
+          
+          
+          div(
+            style = "font-size: 0.5em; color: #6c757d; margin-top: 0px;", 
+            "(câmeras de segurança/10 mil veículos)"
+          )
+        )
+        div_cor_2 <- div(
+          style = "padding: 5px; margin-top: 10px;font-size: 1.2em; display: flex; justify-content: space-between; align-items: center;",
+          strong("Número Atual de Câmeras:"), 
+          span(cameras_atual_txt, 
+               style = "float: right; font-size: 1.4em; font-weight: bold; color: #dc3545;")
+        )
+      }
     
     tagList(
       div(
@@ -420,24 +514,35 @@ server <- function(input, output, session){
       ),
       
       
+      
+      div_cor,
+      
+      div_cor_2,
+      
       div(
-        style = "padding: 5px;margin-top: 25px; font-size: 1.2em",
-        strong("Nível de Fiscalização Atual:"), 
-        span(valor_atual_txt, 
-             style = "float: right; font-size: 1.5em; font-weight: bold; color: #007bff;")
+        style = "padding: 5px; margin-top: 15px; font-size: 1.2em; ",
+        div(
+          style = "display: flex; justify-content: space-between; align-items: center;",
+          strong("Nível de Fiscalização Ideal:"),
+          span(
+            valor_ideal_txt, 
+            style = "font-size: 1.4em; font-weight: bold; color: #007bff;"
+          )
+        ),
+        
+        
+        div(
+          style = "font-size: 0.5em; color: #6c757d; margin-top: 0px;", 
+          "(câmeras de segurança/10 mil veículos)"
+        )
+      ),
+      div(
+        style = "padding: 5px; margin-top: 10px;font-size: 1.2em; display: flex; justify-content: space-between; align-items: center;",
+        strong("Número Ideal de Câmeras:"), 
+        span(cameras_ideal_txt, 
+             style = "float: right; font-size: 1.4em; font-weight: bold; color: #007bff;")
       ),
       
-      br(),
-      
-    
-      div(
-        style = "padding: 5px; margin-top: 25px;font-size: 1.2em",
-        strong("Nível de Fiscalização Ideal:"), 
-        span(valor_ideal_txt, 
-             style = "float: right; font-size: 1.5em; font-weight: bold; color: #007bff;")
-      ),
-      
-      br(),
       
       comparacao_ui
     )
@@ -522,9 +627,9 @@ server <- function(input, output, session){
             tickfont = list(size = 10)
           ),
           yaxis = list(
-            title = "Valor do Indicador",
-            titlefont = list(size = 12),
-            tickfont = list(size = 10)
+            title = "Valor do Indicador (câmeras de segurança / 10 mil veículos)",
+            titlefont = list(size = 10),
+            tickfont = list(size = 8)
           ),
           showlegend = TRUE,
           legend = list(

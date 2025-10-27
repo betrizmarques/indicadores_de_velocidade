@@ -1,0 +1,12 @@
+name: shiny
+title: shiny
+username: onsv1
+account: onsv1
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15877219
+bundleId: 11089180
+url: https://onsv1.shinyapps.io/shiny/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE

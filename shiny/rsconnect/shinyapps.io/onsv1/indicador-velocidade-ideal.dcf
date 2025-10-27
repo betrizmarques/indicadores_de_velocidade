@@ -1,0 +1,12 @@
+name: indicador-velocidade-ideal
+title: indicador-velocidade-ideal
+username: onsv1
+account: onsv1
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15877254
+bundleId: 11090791
+url: https://onsv1.shinyapps.io/indicador-velocidade-ideal/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
