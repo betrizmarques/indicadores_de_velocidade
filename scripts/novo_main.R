@@ -39,3 +39,6 @@ referencia_radares <- base_principal %>%
 View(referencia_radares)
 write.csv(referencia_radares, "output/base_referencia_radares.csv")
 write.csv(referencia_radares, "shiny/base_referencia_radares.csv")
+
+# Municípios outliers e com 0 mortes--------------------------------------------
+outliers <- read.csv("bases/outliers_table.csv")
