@@ -16,18 +16,7 @@ theme <- create_theme(
 )
 
 base <- read_csv("base_referencia_radares.csv") %>% 
-  mutate(cluster_porte = case_when(
-    cluster_junto == "Clusters 1 e 3" & porte == "Menor porte" ~ "Menor Potencial de Mobilização - Menor porte",
-    cluster_junto == "Clusters 1 e 3" & porte == "Médio porte" ~ "Menor Potencial de Mobilização - Médio porte",
-    cluster_junto == "Clusters 1 e 3" & porte == "Maior porte" ~ "Menor Potencial de Mobilização - Maior porte",
-    cluster_junto == "Cluster 2" & porte == "Menor porte" ~ "Maior Potencial de Mobilização - Menor porte",
-    cluster_junto == "Cluster 2" & porte == "Médio porte" ~"Maior Potencial de Mobilização - Médio porte",
-    cluster_junto == "Cluster 2" & porte == "Maior porte" ~ "Maior Potencial de Mobilização - Maior porte"
-  ), 
-  potencial = case_when(
-    cluster_junto == "Clusters 1 e 3" ~ "Menor Potencial de Mobilização",
-    cluster_junto == "Cluster 2" ~ "Maior Potencial de Mobilização"
-  ),
+  mutate(cluster_porte = paste0(cluster, "-", porte),
   porte_com_numeros = case_when(
     porte == "Menor porte" ~ "Menor porte (<20 mil)",
     porte == "Médio porte" ~ "Médio porte (>20 mil e <100 mil)",
@@ -409,7 +398,7 @@ server <- function(input, output, session){
   output$cluster_text <- renderText({
     dados <- dados_selecionados()
     if (!is.null(dados)){
-      print(dados$potencial)
+      print(dados$cluster)
     } else {
       "---"
     }
