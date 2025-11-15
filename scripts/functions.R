@@ -344,9 +344,9 @@ correlacao_cluster_porte_renaest <- function(cluster, porte){
   
 }
 #-------------------------------------------------------------------------------
-calcula_valores_ifs <- function(cluster_junto, porte){
-  base <- base_principal %>% 
-    filter(cluster_junto == {{cluster_junto}}, porte == {{porte}} & radares_10mil_veiculos >0)
+calcula_valores_ifs <- function(cluster, porte){
+  base <- base %>% 
+    filter(cluster == {{cluster}}, porte == {{porte}} & radares_10mil_veiculos >0)
   
   valor_max <- max(base$radares_10mil_veiculos)
   valor_medio <- mean(base$radares_10mil_veiculos, na.rm = T)
