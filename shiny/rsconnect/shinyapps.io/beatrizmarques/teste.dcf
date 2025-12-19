@@ -1,0 +1,13 @@
+name: teste
+title: teste
+username: beatrizmarques
+account: beatrizmarques
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 16156784
+bundleId: 11225632
+url: https://beatrizmarques.shinyapps.io/teste/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: base_dashboard|base_referencia_radares.csv|diagrama_1.png|diagrama_2.png|tabela_relatorio_inidcadores.png

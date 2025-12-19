@@ -25,9 +25,10 @@ ufs <- tibble::tibble(
 
 lista_municipios <- read.csv2('bases/indicadores_municipais.csv', sep = ",") %>% 
   mutate(nome_minusculo = tolower(nome),
-         sem_acento = tolower(stri_trans_general(nome, "Latin-ASCII"))) %>% 
+         sem_acento = tolower(stri_trans_general(nome, "Latin-ASCII")),
+         sem_acento = str_replace(sem_acento, "'", "")) %>% 
   left_join(ufs, by = c("uf" = "estado")) %>% 
-  select(nome, nome_minusculo, sem_acento, sigla, c1, c2, c3)
+  select(nome, nome_minusculo, sem_acento, uf, sigla, c1, c2, c3)
 
 
 populacao_23 <- readxl::read_xls("bases/POP_TCU_2023_Municipios_POP2022_Malha2023.xls", skip = 1) %>% 
@@ -40,9 +41,46 @@ populacao_23 <- readxl::read_xls("bases/POP_TCU_2023_Municipios_POP2022_Malha202
 frota_23 <- readxl::read_xlsx('bases/INDICADORES_RADARES_MUNICIPIOS.xlsx', sheet = 2, skip = 3) %>% 
   mutate(uf = UF,
          nome = tolower(MUNICIPIO),
+         nome = str_replace(nome, "'", ""),
          frota_23 = TOTAL) %>% 
   select(uf, nome, frota_23)
 
+
+
+# nome_municipios <- nas$sem_acento
+# linhas <- c()
+# 
+# funcao <- function(linha, nome_corrigido){
+#   frota_23 <- c(174, 2465,5474, 5559, 1271, 3156, 3697,3709, 3716 ) 
+# }
+
+
+municipios_alterados <- c("eldorado do carajas", "santa izabel do para", "santa isabel do rio negro",
+                          "couto magalhaes", "sao valerio", "pindare-mirim", 
+                          "sao francisco de assis do piaui", "acu", "augusto severo",
+                          "cerro cora", "januario cicco", "joca claudino", "sao domingos",
+                          "belem do sao francisco", "iguaracy", "lagoa de itaenga", 
+                          "sao sebastiao", "gracho cardoso", "lajedo do tabocal",
+                          "santa terezinha", "amparo do serra", "barao de monte alto",
+                          "dona eusebia", "gouveia", "queluzito", "sao thome das letras",
+                          "paraty", "trajano de moraes", "biritiba mirim", "mogi guacu",
+                          "mogi mirim", "bela vista da caroba", "munhoz de melo",
+                          "pinhal de sao bento", "santa cruz de monte castelo", 
+                          "balneario picarras", "lajeado grande", "presidente castello branco",
+                          "sao lourenco do oeste", "sao miguel do oeste", "entre-ijuis",
+                          "vila bela da santissima trindade", "bom jesus de goias" )
+
+linha <- c(2465, 2527, 174, 5474, 5559, 1271, 3156, 3697, 3709, 3716, 3702, 2736,
+             2740, 2803, 2861, 2883, 116, 4735, 426, 547, 1373, 1405, 1602, 1659,
+             1972, 2111, 3646, 3680, 4861, 5133, 5134, 3228, 3422, 3462, 3517, 4445,
+             4559, 4625, 4669, 4672, 4064, 2417, 916)
+
+
+alterar_nome_municipio <- function(linha, municipios_alterados){
+  frota_23[linha, 2] <<- municipios_alterados
+}
+
+mapply(alterar_nome_municipio, linha, municipios_alterados)
 
 base_indicadores <- readxl::read_xlsx("bases/INDICADORES_RADARES_MUNICIPIOS.xlsx", sheet = 4) %>%
   mutate(nome_minusculo = tolower(`Municipio (COM ACENTO)`),
@@ -82,6 +120,8 @@ base_com_outliers <- lista_municipios %>%
          radares_10mil_veiculos = ((Aprovados+Reparadados)/frota_23)*10000,
          radares_10mil_veiculos = replace_na(radares_10mil_veiculos, 0))
 
+
+#nas <- base_com_outliers %>% filter(is.na(frota_23))
 
 # Salva o arquivo csv em uma pasta chamada output/------------------------------
 write.csv(base_com_outliers, file = "output/base_com_outliers.csv")

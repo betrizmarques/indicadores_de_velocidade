@@ -1,0 +1,13 @@
+name: indicador-nivel-fiscalizacao-velocidade
+title: indicador-nivel-fiscalizacao-velocidade
+username: onsv1
+account: onsv1
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 16156690
+bundleId: 11226613
+url: https://onsv1.shinyapps.io/indicador-nivel-fiscalizacao-velocidade/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: base_dashboard|base_referencia_radares.csv|diagrama_1.png|diagrama_2.png

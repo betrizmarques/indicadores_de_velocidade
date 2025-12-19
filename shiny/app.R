@@ -15,19 +15,14 @@ theme <- create_theme(
   )
 )
 
-base <- read_csv("base_referencia_radares.csv") %>% 
-  mutate(cluster_porte = paste0(cluster, "-", porte),
-  porte_com_numeros = case_when(
-    porte == "Menor porte" ~ "Menor porte (<20 mil)",
-    porte == "Médio porte" ~ "Médio porte (>20 mil e <100 mil)",
-    porte == "Maior porte" ~ "Maior porte (>100 mil)"
-  )) %>% filter(!is.na(valor_q3))
+base <- read_csv("base_dashboard.csv") 
+
 
 ui <- dashboardPage(
   
   
   freshTheme = theme,
-  title = "ONSV - Indicador de velocidade ideal",
+  title = "ONSV - Indicador do nível de fiscalização de velocidade",
 
   fullscreen = T,
   dark = NULL,
@@ -138,7 +133,7 @@ ui <- dashboardPage(
             collapsible = TRUE,
             blockQuote(
               "Este estudo tem como objetivo estabelecer um nível de fiscalização
-              eletrônica de velocidade ideal para os municípios brasileiros. ",
+              eletrônica de velocidade mínimo para os municípios brasileiros. ",
               color = "primary"
             )
           )
@@ -207,8 +202,8 @@ ui <- dashboardPage(
             width = 4,
             infoBox(
               width = 12,
-              title = "Nome do município",
-              value = textOutput("municipio_text", inline = TRUE),
+              title = strong("Nome do município"),
+              value = h6(textOutput("municipio_text", inline = TRUE)),
               icon = icon("city"),
             )
           ),
@@ -216,8 +211,8 @@ ui <- dashboardPage(
             width = 4,
             infoBox(
               width = 12,
-              title = "UF",
-              value = textOutput("uf_text", inline = T),
+              title = strong("UF"),
+              value = h6(textOutput("uf_text", inline = T)),
               icon = icon("map-marker-alt"),
             )
           ),
@@ -225,8 +220,8 @@ ui <- dashboardPage(
             width = 4,
             infoBox(
               width = 12,
-              title = "Frota de veículos",
-              value = textOutput("frota_text", inline = TRUE),
+              title = strong("Frota de veículos (2023)"),
+              value = h6(textOutput("frota_text", inline = TRUE)),
               icon = icon("car")
             )
           ),
@@ -234,8 +229,8 @@ ui <- dashboardPage(
             width = 4,
             infoBox(
               width = 12,
-              title = "População",
-              value = textOutput("populacao_text", inline = T),
+              title = strong("População (2023)"),
+              value = h6(textOutput("populacao_text", inline = T)),
               icon = icon("users")
             )
           ),
@@ -243,8 +238,8 @@ ui <- dashboardPage(
             width = 4,
             infoBox(
               width = 12,
-              title = "Porte",
-              value = textOutput("porte_text", inline = T),
+              title = strong("Porte"),
+              value = h6(textOutput("porte_text", inline = T)),
               icon = icon("chart-bar")
             )
           ),
@@ -252,8 +247,8 @@ ui <- dashboardPage(
             width = 4,
             infoBox(
               width = 12,
-              title = "Cluster",
-              value = textOutput("cluster_text", inline = T),
+              title = strong("Cluster Socioeconômico"),
+              value = h6(textOutput("cluster_text", inline = T)),
               icon = icon("sitemap")
             )
           )
@@ -262,7 +257,7 @@ ui <- dashboardPage(
           box(
             title = strong("Fiscalização Eletrônica de Velocidade"),
             solidHeader = T,
-            width = 4,
+            width = 5,
             status = "primary",
             height = "440px",
             uiOutput("fiscalizacao")
@@ -271,7 +266,7 @@ ui <- dashboardPage(
             title = strong("Situação do município em seu cluster"),
             solidHeader = T,
             status = "primary",
-            width = 8,
+            width = 7,
             plotlyOutput("boxplot", height = "400px")
           )
         )
@@ -360,7 +355,7 @@ server <- function(input, output, session){
   output$uf_text <- renderText({
     dados <- dados_selecionados()
     if (!is.null(dados)){
-      print(dados$sigla)
+      print(dados$uf)
     } else{
       "---"
     }
@@ -408,46 +403,48 @@ server <- function(input, output, session){
     dados <- dados_selecionados()
     dados_grupo <- dados_grupo() 
     
-    
     if (is.null(dados) || is.null(dados_grupo)) {
       return(
         p("Selecione um município para ver os detalhes.", 
-          style = "text-align: center; color: gray; padding-top: 20px;")
+          
+          style = "text-align: center; color: gray; padding-top: 180px;" 
+        )
       )
     }
     
     
     valor_atual <- dados$radares_10mil_veiculos
     
-    valor_ideal_q3 <- quantile(dados_grupo$radares_10mil_veiculos, na.rm = TRUE, probs = 0.75)
+    valor_ideal_q3 <- dados$valor_q3
     
     cameras_atual <- dados$total_radares
     
     cameras_ideal <- round(dados$valor_abs)
   
-    valor_atual_txt <- format(round(valor_atual, 2), big.mark = ".", decimal.mark = ",")
-    valor_ideal_txt <- format(round(valor_ideal_q3, 2), big.mark = ".", decimal.mark = ",")
-    cameras_atual_txt <- format(round(cameras_atual, 2), big.mark = ".", decimal.mark = ",")
-    cameras_ideal_txt <- format(round(cameras_ideal, 2), big.mark = ".", decimal.mark = ",")
+    valor_atual_txt <- format(valor_atual, big.mark = ".", decimal.mark = ",")
+    valor_ideal_txt <- format(valor_ideal_q3, big.mark = ".", decimal.mark = ",")
+    cameras_atual_txt <- format(cameras_atual, big.mark = ".", decimal.mark = ",")
+    cameras_ideal_txt <- format(cameras_ideal, big.mark = ".", decimal.mark = ",")
     
   
-    if (valor_atual >= valor_ideal_q3) {
+    if (cameras_atual >= cameras_ideal) {
       comparacao_ui <- div(
-        style = "color: #28a745; font-weight: bold; margin-top: 15px; text-align: center; font-size: 1.1em;", 
+        style = "color: #28a745; font-weight: bold; margin-top: 15px; text-align: center; font-size: 1.0em;", 
         icon("check-circle", style = "font-size: 1.5em;"),
         br(),
-        "O município está no nível ideal ou acima."
+        
+        "O município está no nível mínimo ou acima."
       )
     } else {
       comparacao_ui <- div(
-        style = "color: #dc3545; font-weight: bold; margin-top: 15px; text-align: center; font-size: 1.1em;", 
+        style = "color: #dc3545; font-weight: bold; margin-top: 15px; text-align: center; font-size: 1.0em;", 
         icon("times-circle", style = "font-size: 1.5em;"),
         br(),
-        "O município está abaixo do nível ideal."
+        "O município está abaixo do nível mínimo."
       )
     }
     
-    if (valor_atual >= valor_ideal_q3){
+    if (cameras_atual >= cameras_ideal){
       div_cor <- div(
         style = "padding: 5px; margin-top: 15px; font-size: 1.2em; ",
         div(
@@ -512,7 +509,7 @@ server <- function(input, output, session){
         style = "padding: 5px; margin-top: 15px; font-size: 1.2em; ",
         div(
           style = "display: flex; justify-content: space-between; align-items: center;",
-          strong("Nível de Fiscalização Ideal:"),
+          strong("Nível de Fiscalização Mínimo:"),
           span(
             valor_ideal_txt, 
             style = "font-size: 1.4em; font-weight: bold; color: #007bff;"
@@ -527,7 +524,7 @@ server <- function(input, output, session){
       ),
       div(
         style = "padding: 5px; margin-top: 10px;font-size: 1.2em; display: flex; justify-content: space-between; align-items: center;",
-        strong("Número Ideal de Câmeras:"), 
+        strong("Número Mínimo de Câmeras:"), 
         span(cameras_ideal_txt, 
              style = "float: right; font-size: 1.4em; font-weight: bold; color: #007bff;")
       ),
@@ -543,7 +540,7 @@ server <- function(input, output, session){
       plot_ly() %>%
         layout(
           annotations = list(
-            text = "Selecione um município para visualizar o boxplot do seu grupo",
+            text = "Selecione um município para visualizar o boxplot do seu grupo.",
             x = 0.5,
             y = 0.5,
             xref = "paper",
@@ -556,106 +553,131 @@ server <- function(input, output, session){
         )
     } else{
       dados_grupo <- dados_grupo()
-      p <- plot_ly(
+     valor_q3 <- quantile(dados_grupo$radares_10mil_veiculos, na.rm = TRUE, probs = 0.75)
+
+ 
+    p <- plot_ly(
         data = dados_grupo,
         x = ~cluster_porte,
         y = ~radares_10mil_veiculos,
         type = "box",
-        name = "Distribuição do Grupo",
-        hoveron = "points", 
-        boxpoints = "all",
-        jitter = 0.3,
-        pointpos = -1.8,
-        customdata = ~nome,
-        hovertemplate = paste(
-          "<b>Município:</b> %{customdata}<br>",
-          "<b>Valor:</b> %{y:.2f}<br>",
-          "<extra></extra>"
-        ),
-        marker = list(
-          color = "rgba(70, 130, 180, 0.6)",
-          size = 6
-        ),
+        name = "Distribuição do Grupo (Boxplot)",
+        hoverinfo = 'none',
+        boxpoints = FALSE, 
         fillcolor = "rgba(70, 130, 180, 0.4)",
         line = list(color = "rgba(70, 130, 180, 1)")
+    )
+    
+    
+    p <- p %>% 
+      add_markers(
+        data = dados_grupo,
+        x = ~cluster_porte,
+        y = ~radares_10mil_veiculos,
+        name = "Município", 
         
+      
+        jitter = 0.3,
+     
+        hoverinfo = 'text',
+     
+        text = ~paste(
+          "<b>Município:</b> ", nome, "<br>",
+          "<b>Estado:</b> ", uf, "<br>",
+          "<b>Valor:</b> ", format(radares_10mil_veiculos, digits = 2),
+          sep = ""
+        ),
+        
+        marker = list(
+          color = "rgba(0, 51, 153, 0.6)", 
+          size = 6
+        )
+      )
+        
+   
+    p <- p %>% 
+      add_markers(
+        data = dados,
+        x = ~ cluster_porte,
+        y = ~ radares_10mil_veiculos,
+        name = "Município Selecionado",
+        hoverinfo = 'text',
+        marker = list(
+          color = "red",
+          size = 12,
+          symbol = "diamond",
+          line = list(color = "darkred", width = 2)
+        ),
+        customdata = ~nome, 
+        hovertemplate = paste(
+          "<b>MUNICÍPIO SELECIONADO</b><br>",
+          "<b>Nome:</b> %{customdata}<br>",
+          "<b>Valor:</b> %{y:.2f}<br>",
+          "<extra></extra>"
+        )
+      )
+
+  
+    p <- p %>%
+      layout(
+        title = list(
+          text = paste("Distribuição do Indicador -", dados$cluster_porte),
+          x = 0.5,
+          font = list(size = 16, color = "black")
+        ),
+        margin = list(
+          l = 20, 
+          r = 10,  
+          t = 40,
+          b = 40
+        ),
+        xaxis = list(
+          title = "Grupo",
+          titlefont = list(size = 12),
+          tickfont = list(size = 10)
+        ),
+        yaxis = list(
+          title = "Valor do Indicador (câmeras de segurança / 10 mil veículos)",
+          titlefont = list(size = 10),
+          tickfont = list(size = 8)
+        ),
+        showlegend = TRUE,
+        legend = list(
+          x = 1,
+          y = 0.90,
+          xanchor = 'right',
+          bgcolor = "rgba(255,255,255,0.8)",
+          bordercolor = "rgba(0,0,0,0.2)",
+          borderwidth = 1,
+          font = list(size = 10),
+         
+          itemwidth = 1
+        ),
+        hovermode = "closest",
+        shapes = list(
+          list(
+            type = "line",
+            line = list(color = "red", dash = "dash", width = 2),
+            x0 = 0, x1 = 1, xref = "paper",
+            y0 = valor_q3, y1 = valor_q3, yref = "y"
+          )
+        ),
+        annotations = list(
+          list(
+            text = "Nível de fiscalização eletrônica mínimo",
+            x = 1,
+            y = valor_q3,
+            xref = "paper",
+            yref = "y",
+            showarrow = FALSE,
+            font = list(color = "red", size = 12),
+            xanchor = "right",
+            yanchor = "bottom"
+          )
+        )
       )
       
-      p <- p %>% 
-        add_markers(
-          data = dados,
-          x = ~ cluster_porte,
-          y = ~ radares_10mil_veiculos,
-          name = "Município Selecionado",
-          marker = list(
-            color = "red",
-            size = 12,
-            symbol = "diamond",
-            line = list(color = "darkred", width = 2)
-          ),
-          customdata = ~nome, 
-          hovertemplate = paste(
-            "<b>MUNICÍPIO SELECIONADO</b><br>",
-            "<b>Nome:</b> %{customdata}<br>",
-            "<b>Valor:</b> %{y:.2f}<br>",
-            "<extra></extra>"
-          )
-        )
-      
-      valor_q3 <- quantile(dados_grupo$radares_10mil_veiculos, na.rm = TRUE, probs = 0.75)
-      p <- p %>%
-        layout(
-          title = list(
-            text = paste("Distribuição do Indicador -", dados$cluster_porte),
-            x = 0.5,
-            font = list(size = 16, color = "black")
-          ),
-          xaxis = list(
-            title = "Grupo",
-            titlefont = list(size = 12),
-            tickfont = list(size = 10)
-          ),
-          yaxis = list(
-            title = "Valor do Indicador (câmeras de segurança / 10 mil veículos)",
-            titlefont = list(size = 10),
-            tickfont = list(size = 8)
-          ),
-          showlegend = TRUE,
-          legend = list(
-            x = 0.76,
-            y = 0.98,
-            bgcolor = "rgba(255,255,255,0.8)",
-            bordercolor = "rgba(0,0,0,0.2)",
-            borderwidth = 1
-          ),
-          hovermode = "closest",
-          shapes = list(
-            list(
-              type = "line",
-              line = list(color = "red", dash = "dash", width = 2),
-              x0 = 0,    
-              x1 = 1,    
-              xref = "paper", 
-              y0 = valor_q3, 
-              y1 = valor_q3, 
-              yref = "y"     # 
-            )
-          ),
-          annotations = list(
-            list(
-              text = "Nível de fiscalização eletrônica ideal",
-              x = 0.95,   
-              y = valor_q3, 
-              xref = "paper",
-              yref = "y",
-              showarrow = FALSE,
-              font = list(color = "red", size = 12),
-              xanchor = "right", 
-              yanchor = "bottom" 
-            )
-          )
-        )
-      p
+    return(p)
       
     }
     

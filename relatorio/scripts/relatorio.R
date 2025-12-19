@@ -1,8 +1,10 @@
+# Para rodar este scrpit, primeiro rode o script "novo_main".
 library(gt)
-library(dplyr)
+library(tidyverse)
 
+base <- read_csv("output/est_descritivas.csv")
 
-tabela_gt <- resultado_quartis %>% 
+tabela_gt <- base %>% 
   gt() %>% 
   cols_label(
     porte_param = "Porte",
@@ -17,10 +19,20 @@ tabela_gt <- resultado_quartis %>%
     columns = everything() 
   )
 
-gtsave(tabela_gt, "relatorio/tabelas/tabela_relatorio_inidcadores.png")
+gtsave(tabela_gt, "relatorio/tabelas/tabela_relatorio_indicadores.png")
 
 
 #-------------------------------------------------------------------------------
 
-soma_pais_inteiro <- sum(referencia_radares$radares_10mil_veiculos, na.rm = T)
-soma_pais_inteiro_atual <- sum(referencia_radares$valor_q3, na.rm = T)
+soma_atual <- sum(referencia_radares$total_radares, na.rm = T)
+soma_ideal <- round(sum(referencia_radares$valor_abs))
+
+soma_ideal-soma_atual
+
+# quantd de municípios por combinação de cluster/porte--------------------------
+referencia_radares %>% 
+  group_by(porte, cluster_c) %>% 
+  summarise(contagem_municipios = n())
+
+referencia_radares %>% 
+  filter(is.na(valor_q3))
